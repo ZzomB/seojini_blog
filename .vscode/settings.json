@@ -1,0 +1,8 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "tabSize": 2,
+  "css.lint.unknownAtRules": "ignore"
+}
