@@ -1,27 +1,26 @@
 import Link from 'next/link';
 import { PostCard } from '@/components/features/blog/PostCard';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
 import TagSection from './_components/TagSection';
 import ProfileSection from './_components/ProfileSection';
 import ContactSection from './_components/ContactSection';
 import { getPublishedPosts, getTagList } from '@/lib/notion';
+import SortSelect from './_components/client/SortSelect';
 
 interface HomeProps {
-  searchParams: Promise<{ tag?: string }>;
+  searchParams: Promise<{ tag?: string; sort?: string }>;
 }
 
 export default async function Home({ searchParams }: HomeProps) {
-  const { tag } = await searchParams;
+  const { tag, sort } = await searchParams;
   const selectedTag = tag;
+  const selectedSort = sort || 'latest';
 
   // 서버사이드에서 필터링된 포스트 가져오기
-  const [posts, tags] = await Promise.all([getPublishedPosts(selectedTag), getTagList()]);
+  const [posts, tags] = await Promise.all([
+    getPublishedPosts(selectedTag, selectedSort),
+    getTagList(),
+  ]);
 
   return (
     // min-h-screen으로 전체 높이 보장, grid로 3개 영역 분할
@@ -44,23 +43,15 @@ export default async function Home({ searchParams }: HomeProps) {
                 <p className="text-muted-foreground mt-1">총 {posts.length}개의 포스트</p>
               )}
             </div>
-            <Select defaultValue="latest">
-              <SelectTrigger className="w=[180px]">
-                <SelectValue placeholder="정렬 방식 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="latest">최신순</SelectItem>
-                <SelectItem value="oldest">오래된순</SelectItem>
-              </SelectContent>
-            </Select>
+            <SortSelect />
           </div>
 
           {/* 블로그 카드 그리드 */}
           <div className="grid gap-4">
             {posts.length > 0 ? (
-              posts.map((post) => (
+              posts.map((post, index) => (
                 <Link href={`/blog/${post.slug}`} key={post.id}>
-                  <PostCard key={post.id} post={post} />
+                  <PostCard key={post.id} post={post} isFirst={index === 0} />
                 </Link>
               ))
             ) : (
