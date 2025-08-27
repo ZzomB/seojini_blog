@@ -179,6 +179,7 @@ export const getPublishedPosts = unstable_cache(
   ['posts'],
   {
     tags: ['posts'],
+    revalidate: 60, // 1분마다 캐시 재검증
   }
 );
 
