@@ -1,6 +1,7 @@
 import type { Post, TagFilterItem } from '@/types/blog';
 import { Client, PageObjectResponse } from '@notionhq/client';
 import { NotionToMarkdown } from 'notion-to-md';
+import { unstable_cache } from 'next/cache';
 
 export const notion = new Client({
   auth: process.env.NOTION_TOKEN,
@@ -108,54 +109,84 @@ export const getPostBySlug = async (
   };
 };
 
-export const getPublishedPosts = async (tag?: string, sort?: string): Promise<Post[]> => {
-  const response = await notion.databases.query({
-    database_id: process.env.NOTION_DATABASE_ID!,
-    filter:
-      tag && tag !== '전체'
-        ? {
-            and: [
-              {
-                property: 'Status',
-                select: {
-                  equals: 'Published',
+export interface GetPublishedPostsParams {
+  tag?: string;
+  sort?: string;
+  pageSize?: number;
+  startCursor?: string;
+}
+
+export interface GetPublishedPostsResponse {
+  posts: Post[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
+export const getPublishedPosts = unstable_cache(
+  async ({
+    tag = '전체',
+    sort = 'latest',
+    pageSize = 2,
+    startCursor,
+  }: GetPublishedPostsParams = {}): Promise<GetPublishedPostsResponse> => {
+    const response = await notion.databases.query({
+      database_id: process.env.NOTION_DATABASE_ID!,
+      filter:
+        tag && tag !== '전체'
+          ? {
+              and: [
+                {
+                  property: 'Status',
+                  select: {
+                    equals: 'Published',
+                  },
                 },
-              },
-              {
-                property: 'Tags',
-                multi_select: {
-                  contains: tag,
+                {
+                  property: 'Tags',
+                  multi_select: {
+                    contains: tag,
+                  },
                 },
+              ],
+            }
+          : {
+              property: 'Status',
+              select: {
+                equals: 'Published',
               },
-            ],
-          }
-        : {
-            property: 'Status',
-            select: {
-              equals: 'Published',
             },
-          },
-    sorts: [
-      {
-        property: 'Date',
-        direction: sort === 'latest' ? 'descending' : 'ascending',
-      },
-    ],
-  });
+      sorts: [
+        {
+          property: 'Date',
+          direction: sort === 'latest' ? 'descending' : 'ascending',
+        },
+      ],
+      page_size: pageSize,
+      start_cursor: startCursor,
+    });
 
-  // Notion API 응답을 Post 타입으로 변환
-  const posts: Post[] = response.results
-    .filter((page): page is PageObjectResponse => page.object === 'page')
-    .map(getPostMetadata);
+    // Notion API 응답을 Post 타입으로 변환
+    const posts: Post[] = response.results
+      .filter((page): page is PageObjectResponse => page.object === 'page')
+      .map(getPostMetadata);
 
-  return posts;
-};
+    return {
+      posts,
+      hasMore: response.has_more,
+      nextCursor: response.next_cursor,
+    };
+  },
+  ['posts'],
+  {
+    tags: ['posts'],
+  }
+);
 
 // 태그 목록을 가져오는 함수
 export const getTagList = async (): Promise<TagFilterItem[]> => {
-  const posts = await getPublishedPosts();
+  const { posts } = await getPublishedPosts({ pageSize: 100 });
 
-  // 모든 포스트에서 태그를 수집
+  // 모든 포스트에서 태그를 수집x
   const tagCountMap = new Map<string, number>();
 
   posts.forEach((post) => {
@@ -182,4 +213,52 @@ export const getTagList = async (): Promise<TagFilterItem[]> => {
   ];
 
   return tagList;
+};
+
+export interface CreatePostParams {
+  title: string;
+  tags: string;
+  content: string;
+}
+
+export const createPost = async ({ title, tags, content }: CreatePostParams) => {
+  const response = await notion.pages.create({
+    parent: {
+      database_id: process.env.NOTION_DATABASE_ID!,
+    },
+    properties: {
+      Title: {
+        title: [
+          {
+            text: {
+              content: title,
+            },
+          },
+        ],
+      },
+      Description: {
+        rich_text: [
+          {
+            text: {
+              content: content,
+            },
+          },
+        ],
+      },
+      Tags: {
+        multi_select: [{ name: tags }],
+      },
+      Status: {
+        select: {
+          name: 'Published',
+        },
+      },
+      Date: {
+        date: {
+          start: new Date().toISOString(),
+        },
+      },
+    },
+  });
+  return response;
 };
