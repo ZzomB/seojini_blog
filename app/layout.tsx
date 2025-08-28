@@ -16,8 +16,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Joos Blog',
+  title: {
+    template: '%s | Joos Blog',
+    default: 'Joos Blog',
+  },
   description: 'for test real activating notion based blog',
+  keywords: ['Next.js', '프론트엔드', '웹개발', '코딩', '프로그래밍', '리액트'],
+  authors: [{ name: 'Joo', url: 'https://github.com/ZzomB' }],
+  creator: 'Joo',
+  publisher: 'Joo',
+  formatDetection: {
+    email: false,
+    telephone: false,
+    address: false,
+  },
+  metadataBase: new URL('https://my-blog-one-delta.vercel.app'),
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export default function RootLayout({
