@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, User } from 'lucide-react';
-import { getPostBySlug } from '@/lib/notion';
+import { getPostBySlug, getPublishedPosts } from '@/lib/notion';
 import { formatDate } from '@/lib/date';
 import { MDXRemote } from 'next-mdx-remote-client/rsc';
 import rehypeSanitize from 'rehype-sanitize';
@@ -21,6 +21,13 @@ interface TocEntry {
   id?: string;
   children?: Array<TocEntry>;
 }
+
+export const generateStaticParams = async () => {
+  const { posts } = await getPublishedPosts();
+  return posts.map((post) => ({ slug: post.slug }));
+};
+
+export const revalidate = 60; // 1분마다 캐시 재검증
 
 function TableOfContentsLink({ item }: { item: TocEntry }) {
   return (
@@ -100,7 +107,7 @@ export default async function BlogPost({ params }: BlogPostProps) {
             <details className="bg-muted/60 rounded-lg p-4 backdrop-blur-sm">
               <summary className="cursor-pointer text-lg font-semibold">목차</summary>
               <nav className="mt-3 space-y-3 text-sm">
-                {data?.toc?.map((item) => (
+                {data?.toc?.map((item: TocEntry) => (
                   <TableOfContentsLink key={item.id} item={item} />
                 ))}
               </nav>
