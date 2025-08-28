@@ -61,9 +61,9 @@ export default async function BlogPost({ params }: BlogPostProps) {
   });
 
   return (
-    <div className="container py-12">
-      <div className="grid grid-cols-[240px_1fr_240px] gap-6">
-        <aside>{/* 추후콘텐츠 추가 */}</aside>
+    <div className="container py-6 md:py-12 lg:py-12">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[240px_1fr_240px] md:gap-8">
+        <aside className="hidden md:block">{/* 추후콘텐츠 추가 */}</aside>
         <section>
           {/* 블로그 헤더 */}
           <div className="space-y-4">
@@ -73,7 +73,7 @@ export default async function BlogPost({ params }: BlogPostProps) {
                   <Badge key={tag}>{tag}</Badge>
                 ))}
               </div>
-              <h1 className="text-4xl font-bold">{post.title}</h1>
+              <h1 className="text-3xl font-bold md:text-4xl">{post.title}</h1>
             </div>
 
             {/* 메타 정보 */}
@@ -86,14 +86,21 @@ export default async function BlogPost({ params }: BlogPostProps) {
                 <CalendarDays className="h-4 w-4" />
                 <span>{post.date ? formatDate(post.date) : ''}</span>
               </div>
-              {/* <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                <span>5분 읽기</span>
-              </div> */}
             </div>
           </div>
 
           <Separator className="my-8" />
+          {/* 모바일 전용 목차 */}
+          <div className="sticky top-[var(--sticky-top)] mb-6 md:hidden">
+            <details className="bg-muted/60 rounded-lg p-4 backdrop-blur-sm">
+              <summary className="cursor-pointer text-lg font-semibold">목차</summary>
+              <nav className="mt-3 space-y-3 text-sm">
+                {data?.toc?.map((item) => (
+                  <TableOfContentsLink key={item.id} item={item} />
+                ))}
+              </nav>
+            </details>
+          </div>
 
           {/* 블로그 본문 */}
           <div className="prose prose-slate dark:prose-invert prose-headings:scroll-mt-[var(--header-height)] max-w-none">
@@ -112,7 +119,7 @@ export default async function BlogPost({ params }: BlogPostProps) {
           {/* 이전/다음 포스트 네비게이션 */}
           <GiscusComments />
         </section>
-        <aside className="relative">
+        <aside className="relative hidden md:block">
           <div className="sticky top-[var(--sticky-top)]">
             <div className="bg-muted/50 space-y-4 rounded-lg p-6 backdrop-blur-sm">
               <h3 className="text-lg font-semibold">목차</h3>
