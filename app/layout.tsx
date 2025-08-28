@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     telephone: false,
     address: false,
   },
-  metadataBase: new URL('https://my-blog-one-delta.vercel.app'),
+  metadataBase: new URL(`${process.env.NEXT_PUBLIC_SITE_URL}`),
   alternates: {
     canonical: '/',
   },
