@@ -114,7 +114,7 @@ export default async function BlogPost({ params }: BlogPostProps) {
     <div className="container py-6 md:py-12 lg:py-12">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[240px_1fr_240px] md:gap-8">
         <aside className="hidden md:block">{/* 추후콘텐츠 추가 */}</aside>
-        <section>
+        <section className="overflow-hidden">
           {/* 블로그 헤더 */}
           <div className="space-y-4">
             <div className="space-y-2">
