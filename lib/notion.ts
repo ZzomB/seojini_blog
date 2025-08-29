@@ -183,7 +183,7 @@ export const getPublishedPosts = unstable_cache(
       nextCursor: response.next_cursor,
     };
   },
-  ['posts'],
+  undefined,
   {
     tags: ['posts'],
     revalidate: 60, // 1분마다 캐시 재검증

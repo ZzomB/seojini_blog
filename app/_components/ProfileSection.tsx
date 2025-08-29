@@ -1,7 +1,7 @@
 import { Youtube, Github, BookOpen, Instagram } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import Image from 'next/image';
+import ProfileImage from '@/components/ProfileImage';
 
 const socialLinks = [
   {
@@ -31,13 +31,7 @@ export default function ProfileSection() {
             <div className="flex justify-center">
               <div className="bg-muted rounded-full p-2">
                 <div className="h-36 w-36 overflow-hidden rounded-full">
-                  <Image
-                    src="/images/profile-cat.png"
-                    alt="cat"
-                    width={144}
-                    height={144}
-                    className="object-cover"
-                  />
+                  <ProfileImage />
                 </div>
               </div>
             </div>
