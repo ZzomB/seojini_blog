@@ -37,8 +37,8 @@ export default function ProfileSection() {
             </div>
 
             <div className="text-center">
-              <h3 className="text-lg font-bold">Cat</h3>
-              <p className="text-primary text-sm">Cat Meowing Meow</p>
+              <h3 className="text-lg font-bold">JiniLog</h3>
+              <p className="text-primary text-sm">Jini & Hoya</p>
             </div>
 
             <div className="flex justify-center gap-2">
