@@ -16,7 +16,7 @@ export default function ProfileImage() {
     return (
       <Image
         src="/images/profile-hoya-light.png"
-        alt="cat"
+        alt="hoya"
         width={144}
         height={144}
         className="object-cover"
@@ -27,7 +27,7 @@ export default function ProfileImage() {
   return (
     <Image
       src={theme === 'light' ? '/images/profile-hoya-light.png' : '/images/profile-hoya-dark.png'}
-      alt="cat"
+      alt="hoya"
       width={144}
       height={144}
       className="object-cover"
