@@ -6,9 +6,35 @@ import { CalendarDays, User } from 'lucide-react';
 import { getPostBySlug, getPublishedPosts } from '@/lib/notion';
 import { formatDate } from '@/lib/date';
 import { MDXRemote } from 'next-mdx-remote-client/rsc';
-import rehypeSanitize from 'rehype-sanitize';
+import type { MDXComponents } from 'mdx/types';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import type { Schema } from 'hast-util-sanitize';
+import { rehypeMdxToElement } from '@/lib/rehype-mdx-to-element';
+
+// 보안: rehype-sanitize를 사용하여 XSS 공격 방지
+// MDX 특수 노드(mdxJsxTextElement)를 일반 element로 변환한 후 sanitize
+const customSanitizeSchema: Schema = {
+  ...defaultSchema,
+  // u 태그를 허용 목록에 추가
+  tagNames: Array.from(
+    new Set([...(Array.isArray(defaultSchema.tagNames) ? defaultSchema.tagNames : []), 'u'])
+  ),
+  // u 태그의 속성 허용
+  attributes: {
+    ...(defaultSchema.attributes || {}),
+    u: [],
+    // MDX 컴포넌트들이 사용할 수 있는 기본 속성들 허용
+    '*': [...(defaultSchema.attributes?.['*'] || []), 'className', 'style'],
+  },
+};
+//
+// 참고: rehype-sanitize를 비활성화하면 밑줄이 정상적으로 나타남
+// 보안: Notion API에서 가져온 콘텐츠이므로 XSS 공격 위험이 낮음
+// 필요시 최소한의 보안 설정으로 재활성화 가능
+
 import rehypePrettycode from 'rehype-pretty-code';
 import rehypeSlug from 'rehype-slug';
+import remarkGfm from 'remark-gfm';
 import { compile } from '@mdx-js/mdx';
 import withSlugs from 'rehype-slug';
 import withToc from '@stefanprobst/rehype-extract-toc';
@@ -111,6 +137,17 @@ export default async function BlogPost({ params }: BlogPostProps) {
     notFound();
   }
 
+  // 테스트 1: 마크다운 소스에 <u> 태그가 실제로 있는지 확인
+  if (process.env.NODE_ENV === 'development') {
+    const underlineMatches = markdown.match(/<u>.*?<\/u>/g);
+    // eslint-disable-next-line no-console
+    console.log('🔍 [테스트 1] 마크다운 소스의 <u> 태그:', underlineMatches?.length || 0, '개');
+    if (underlineMatches && underlineMatches.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log('🔍 [테스트 1] <u> 태그 샘플:', underlineMatches.slice(0, 3));
+    }
+  }
+
   const { data } = await compile(markdown, {
     rehypePlugins: [
       withSlugs,
@@ -166,7 +203,10 @@ export default async function BlogPost({ params }: BlogPostProps) {
 
           <Separator className="my-8" />
           {/* 모바일 전용 목차 */}
-          <div className="sticky mb-6 md:hidden" style={{ top: 'calc(var(--header-height) + var(--sticky-offset))' }}>
+          <div
+            className="sticky mb-6 md:hidden"
+            style={{ top: 'calc(var(--header-height) + var(--sticky-offset))' }}
+          >
             <details className="bg-muted/60 rounded-lg p-4 backdrop-blur-sm">
               <summary className="cursor-pointer text-lg font-semibold">목차</summary>
               <nav className="mt-3 space-y-3 text-sm">
@@ -181,9 +221,38 @@ export default async function BlogPost({ params }: BlogPostProps) {
           <div className="prose prose-slate dark:prose-invert prose-headings:scroll-mt-[var(--header-height)] max-w-none">
             <MDXRemote
               source={markdown}
+              // 제미나이 답변: components에서 u 처리 (가장 권장)
+              // MDX 파서가 <u>를 만났을 때 rehype-sanitize 과정을 거치기 전에
+              // 이미 안전한 리액트 컴포넌트로 치환하려고 시도
+              components={
+                {
+                  u: ({ children, ...props }) => {
+                    // 디버깅: u 컴포넌트 호출 확인
+                    if (process.env.NODE_ENV === 'development') {
+                      // eslint-disable-next-line no-console
+                      console.log('🔍 [제미나이 해결책] u 컴포넌트 호출됨:', { children, props });
+                    }
+                    return <u {...props}>{children}</u>;
+                  },
+                } as MDXComponents
+              }
               options={{
                 mdxOptions: {
-                  rehypePlugins: [rehypeSanitize, rehypePrettycode, rehypeSlug],
+                  remarkPlugins: [
+                    [remarkGfm, { singleTilde: false }], // 단일 ~는 취소선으로 인식하지 않음 (~~만 취소선)
+                  ],
+                  // MDX는 기본적으로 HTML을 지원하므로 remark-rehype의 allowDangerousHtml 불필요
+                  // rehype-raw는 next-mdx-remote-client와 호환되지 않으므로 제거
+                  rehypePlugins: [
+                    // 보안: MDX 특수 노드를 일반 element로 변환한 후 sanitize
+                    // rehype-sanitize가 mdxJsxTextElement를 인식하지 못하므로
+                    // 먼저 일반 element로 변환한 후 sanitize
+                    rehypeMdxToElement,
+                    // rehype-sanitize: HTML을 안전하게 필터링하여 XSS 공격 방지
+                    [rehypeSanitize, customSanitizeSchema],
+                    rehypePrettycode,
+                    rehypeSlug,
+                  ],
                 },
               }}
             />
@@ -195,7 +264,10 @@ export default async function BlogPost({ params }: BlogPostProps) {
           <GiscusComments />
         </section>
         <aside className="relative hidden md:block">
-          <div className="sticky" style={{ top: 'calc(var(--header-height) + var(--sticky-offset))' }}>
+          <div
+            className="sticky"
+            style={{ top: 'calc(var(--header-height) + var(--sticky-offset))' }}
+          >
             <div className="bg-muted/50 space-y-4 rounded-lg p-6 backdrop-blur-sm">
               <h3 className="text-lg font-semibold">목차</h3>
               <nav className="space-y-3 text-sm">

@@ -126,6 +126,20 @@
   }
 }
 
+@layer utilities {
+  /* 밑줄 스타일링 - prose 클래스 내에서 사용 */
+  .prose u {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  
+  /* 취소선 스타일링 - GFM 지원 */
+  .prose del {
+    text-decoration: line-through;
+  }
+}
+
 .container {
   @apply mx-auto max-w-6xl px-4;
   width: 100%;

@@ -110,8 +110,23 @@ export const getPostBySlug = async (
   const mdblocks = await n2m.pageToMarkdown(response.results[0].id);
   const { parent } = n2m.toMarkdownString(mdblocks);
 
+  // 밑줄 태그는 그대로 유지 (MDX가 기본적으로 HTML을 지원)
+  const processedMarkdown = parent;
+
+  // 디버깅: 밑줄 패턴 확인 (개발 환경에서만)
+  if (process.env.NODE_ENV === 'development') {
+    const underlineMatches = processedMarkdown.match(/<u>.*?<\/u>/g);
+    if (underlineMatches && underlineMatches.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log('🔍 밑줄 태그 발견:', underlineMatches.slice(0, 5));
+    } else {
+      // eslint-disable-next-line no-console
+      console.log('🔍 밑줄 태그 없음 - 마크다운 샘플:', processedMarkdown.substring(0, 500));
+    }
+  }
+
   return {
-    markdown: parent,
+    markdown: processedMarkdown,
     post: getPostMetadata(response.results[0] as PageObjectResponse),
   };
 };
