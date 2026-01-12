@@ -1,3 +1,5 @@
+'use client';
+
 import { Youtube, Github, BookOpen, Instagram } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,19 +8,19 @@ import ProfileImage from '@/components/ProfileImage';
 const socialLinks = [
   {
     icon: Youtube,
-    href: 'https://www.youtube.com/gymcoding',
+    href: '',
   },
   {
     icon: Github,
-    href: 'https://github.com/gymcoding',
+    href: '',
   },
   {
     icon: BookOpen,
-    href: 'https://www.inflearn.com/users/432199/@gymcoding',
+    href: '',
   },
   {
     icon: Instagram,
-    href: 'https://www.instagram.com/gymcoding',
+    href: '',
   },
 ];
 
@@ -44,7 +46,12 @@ export default function ProfileSection() {
             <div className="flex justify-center gap-2">
               {socialLinks.map((item, index) => (
                 <Button key={index} variant="ghost" className="bg-priamry/10" size="icon" asChild>
-                  <a href={item.href} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={item.href}
+                    onClick={(e) => {
+                      e.preventDefault();
+                    }}
+                  >
                     <item.icon className="h-4 w-4" />
                   </a>
                 </Button>

@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | Joos Blog',
-    default: 'Joos Blog',
+    template: '%s | 서지니 블로그',
+    default: '서지니 블로그',
   },
   description: 'for test real activating notion based blog',
   keywords: ['Next.js', '프론트엔드', '웹개발', '코딩', '프로그래밍', '리액트'],
