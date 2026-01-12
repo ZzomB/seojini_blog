@@ -166,7 +166,7 @@ export default async function BlogPost({ params }: BlogPostProps) {
 
           <Separator className="my-8" />
           {/* 모바일 전용 목차 */}
-          <div className="sticky top-[var(--sticky-top)] mb-6 md:hidden">
+          <div className="sticky mb-6 md:hidden" style={{ top: 'calc(var(--header-height) + var(--sticky-offset))' }}>
             <details className="bg-muted/60 rounded-lg p-4 backdrop-blur-sm">
               <summary className="cursor-pointer text-lg font-semibold">목차</summary>
               <nav className="mt-3 space-y-3 text-sm">
@@ -195,7 +195,7 @@ export default async function BlogPost({ params }: BlogPostProps) {
           <GiscusComments />
         </section>
         <aside className="relative hidden md:block">
-          <div className="sticky top-[var(--sticky-top)]">
+          <div className="sticky" style={{ top: 'calc(var(--header-height) + var(--sticky-offset))' }}>
             <div className="bg-muted/50 space-y-4 rounded-lg p-6 backdrop-blur-sm">
               <h3 className="text-lg font-semibold">목차</h3>
               <nav className="space-y-3 text-sm">
