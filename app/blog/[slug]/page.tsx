@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, User } from 'lucide-react';
@@ -49,6 +50,16 @@ export async function generateMetadata({
       modifiedTime: post.date,
       authors: post.author || 'joo',
       tags: post.tags,
+      ...(post.coverImage && {
+        images: [
+          {
+            url: post.coverImage,
+            width: 1200,
+            height: 600,
+            alt: post.title,
+          },
+        ],
+      }),
     },
   };
 }
@@ -138,6 +149,20 @@ export default async function BlogPost({ params }: BlogPostProps) {
               </div>
             </div>
           </div>
+
+          {/* 대표 이미지 */}
+          {post.coverImage && (
+            <div className="relative mt-6 aspect-[2/1] overflow-hidden rounded-lg">
+              <Image
+                src={post.coverImage}
+                alt={post.title}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+                priority
+                className="object-cover"
+              />
+            </div>
+          )}
 
           <Separator className="my-8" />
           {/* 모바일 전용 목차 */}
