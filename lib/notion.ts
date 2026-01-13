@@ -9,6 +9,199 @@ export const notion = new Client({
 
 const n2m = new NotionToMarkdown({ notionClient: notion });
 
+// Notion 블록 타입 정의
+interface NotionRichText {
+  plain_text: string;
+}
+
+interface NotionFile {
+  url: string;
+}
+
+interface NotionImageBlock {
+  image: {
+    file?: NotionFile;
+    external?: { url: string };
+    caption?: NotionRichText[];
+  };
+}
+
+interface NotionVideoBlock {
+  video: {
+    file?: NotionFile;
+    external?: { url: string };
+    caption?: NotionRichText[];
+  };
+}
+
+interface NotionEmbedBlock {
+  embed: {
+    url: string;
+    caption?: NotionRichText[];
+  };
+}
+
+interface NotionBookmarkBlock {
+  bookmark: {
+    url: string;
+    caption?: NotionRichText[];
+  };
+}
+
+// 커스텀 트랜스포머 설정: 이미지, 비디오, 임베드를 적절한 HTML로 변환
+n2m.setCustomTransformer('image', async (block) => {
+  const { image } = block as NotionImageBlock;
+  if (!image) return '';
+
+  const imageUrl = image.file?.url || image.external?.url || '';
+  const caption = image.caption || [];
+  const captionText = caption.map((item) => item.plain_text).join('') || '';
+
+  if (!imageUrl) return '';
+
+  return `<img src="${imageUrl}" alt="${captionText}" />`;
+});
+
+n2m.setCustomTransformer('video', async (block) => {
+  const { video } = block as NotionVideoBlock;
+  if (!video) return '';
+
+  const videoUrl = video.file?.url || video.external?.url || '';
+  const caption = video.caption || [];
+  const captionText = caption.map((item) => item.plain_text).join('') || '';
+
+  if (!videoUrl) return '';
+
+  // Google Drive 링크 처리
+  if (videoUrl.includes('drive.google.com')) {
+    const fileIdMatch = videoUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (fileIdMatch && fileIdMatch[1]) {
+      const fileId = fileIdMatch[1];
+      const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      return `<div class="aspect-video w-full rounded-lg overflow-hidden">
+  <iframe 
+    src="${previewUrl}" 
+    frameborder="0" 
+    allow="autoplay; fullscreen; picture-in-picture" 
+    allowfullscreen
+    class="w-full h-full"
+  ></iframe>
+  ${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${captionText}</p>` : ''}
+</div>`;
+    }
+  }
+
+  // 비디오 파일 확장자 확인
+  const videoExtension = videoUrl.split('.').pop()?.toLowerCase() || 'mp4';
+  const mimeType = videoExtension === 'webm' ? 'video/webm' : 'video/mp4';
+
+  return `<video controls class="w-full rounded-lg">
+  <source src="${videoUrl}" type="${mimeType}" />
+  ${captionText ? `<p>${captionText}</p>` : ''}
+  Your browser does not support the video tag.
+</video>`;
+});
+
+n2m.setCustomTransformer('embed', async (block) => {
+  const { embed } = block as NotionEmbedBlock;
+  if (!embed?.url) return '';
+
+  const url = embed.url;
+  const caption = embed.caption || [];
+  const captionText = caption.map((item) => item.plain_text).join('') || '';
+
+  // Google Drive 링크 처리
+  if (url.includes('drive.google.com')) {
+    const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (fileIdMatch && fileIdMatch[1]) {
+      const fileId = fileIdMatch[1];
+      const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+      return `<div class="aspect-video w-full rounded-lg overflow-hidden">
+  <iframe 
+    src="${previewUrl}" 
+    frameborder="0" 
+    allow="autoplay; fullscreen; picture-in-picture" 
+    allowfullscreen
+    class="w-full h-full"
+  ></iframe>
+  ${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${captionText}</p>` : ''}
+</div>`;
+    }
+  }
+
+  // YouTube URL 처리
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    let videoId = '';
+    if (url.includes('youtube.com/watch?v=')) {
+      videoId = url.split('v=')[1]?.split('&')[0] || '';
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
+    }
+
+    if (videoId) {
+      return `<div class="aspect-video w-full rounded-lg overflow-hidden">
+  <iframe 
+    src="https://www.youtube.com/embed/${videoId}" 
+    frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen
+    class="w-full h-full"
+  ></iframe>
+  ${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${captionText}</p>` : ''}
+</div>`;
+    }
+  }
+
+  // Vimeo URL 처리
+  if (url.includes('vimeo.com')) {
+    const videoId = url.split('vimeo.com/')[1]?.split('?')[0] || '';
+    if (videoId) {
+      return `<div class="aspect-video w-full rounded-lg overflow-hidden">
+  <iframe 
+    src="https://player.vimeo.com/video/${videoId}" 
+    frameborder="0" 
+    allow="autoplay; fullscreen; picture-in-picture" 
+    allowfullscreen
+    class="w-full h-full"
+  ></iframe>
+  ${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${captionText}</p>` : ''}
+</div>`;
+    }
+  }
+
+  // 이미지 URL인 경우 (확장자로 판단)
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+  const isImage = imageExtensions.some((ext) => url.toLowerCase().includes(ext));
+
+  if (isImage) {
+    return `<img src="${url}" alt="${captionText}" class="w-full rounded-lg" />`;
+  }
+
+  // 일반 링크 미리보기
+  return `<div class="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+  <a href="${url}" target="_blank" rel="noopener noreferrer" class="block">
+    <p class="font-medium text-sm">${url}</p>
+    ${captionText ? `<p class="mt-1 text-xs text-muted-foreground">${captionText}</p>` : ''}
+  </a>
+</div>`;
+});
+
+n2m.setCustomTransformer('bookmark', async (block) => {
+  const { bookmark } = block as NotionBookmarkBlock;
+  if (!bookmark?.url) return '';
+
+  const url = bookmark.url;
+  const caption = bookmark.caption || [];
+  const captionText = caption.map((item) => item.plain_text).join('') || '';
+
+  return `<div class="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+  <a href="${url}" target="_blank" rel="noopener noreferrer" class="block">
+    <p class="font-medium text-sm break-words">${url}</p>
+    ${captionText ? `<p class="mt-1 text-xs text-muted-foreground">${captionText}</p>` : ''}
+  </a>
+</div>`;
+});
+
 function getPostMetadata(page: PageObjectResponse): Post {
   const pageData = page as {
     id: string;

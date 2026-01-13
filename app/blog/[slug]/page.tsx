@@ -15,14 +15,29 @@ import { rehypeMdxToElement } from '@/lib/rehype-mdx-to-element';
 // MDX 특수 노드(mdxJsxTextElement)를 일반 element로 변환한 후 sanitize
 const customSanitizeSchema: Schema = {
   ...defaultSchema,
-  // u 태그를 허용 목록에 추가
+  // 허용할 태그 목록에 추가
   tagNames: Array.from(
-    new Set([...(Array.isArray(defaultSchema.tagNames) ? defaultSchema.tagNames : []), 'u'])
+    new Set([
+      ...(Array.isArray(defaultSchema.tagNames) ? defaultSchema.tagNames : []),
+      'u',
+      'img',
+      'video',
+      'source',
+      'iframe',
+      'div',
+    ])
   ),
-  // u 태그의 속성 허용
+  // 태그별 속성 허용
   attributes: {
     ...(defaultSchema.attributes || {}),
     u: [],
+    img: ['src', 'alt', 'class', 'className', 'style'],
+    video: ['controls', 'class', 'className', 'style'],
+    source: ['src', 'type'],
+    iframe: ['src', 'frameborder', 'allow', 'allowfullscreen', 'class', 'className', 'style'],
+    div: ['class', 'className', 'style'],
+    a: ['href', 'target', 'rel', 'class', 'className', 'style'],
+    p: ['class', 'className', 'style'],
     // MDX 컴포넌트들이 사용할 수 있는 기본 속성들 허용
     '*': [...(defaultSchema.attributes?.['*'] || []), 'className', 'style'],
   },
