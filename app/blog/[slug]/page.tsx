@@ -10,6 +10,7 @@ import type { MDXComponents } from 'mdx/types';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import type { Schema } from 'hast-util-sanitize';
 import { rehypeMdxToElement } from '@/lib/rehype-mdx-to-element';
+import { rehypeRemoveNestedAnchors } from '@/lib/rehype-remove-nested-anchors';
 
 // 보안: rehype-sanitize를 사용하여 XSS 공격 방지
 // MDX 특수 노드(mdxJsxTextElement)를 일반 element로 변환한 후 sanitize
@@ -152,6 +153,112 @@ export default async function BlogPost({ params }: BlogPostProps) {
     notFound();
   }
 
+  // 디버깅: 마크다운 콘텐츠 분석 (firstweek 슬러그인 경우에만)
+  if (process.env.NODE_ENV === 'development' && slug === 'firstweek') {
+    // eslint-disable-next-line no-console
+    console.log('🔍 [디버깅] 슬러그:', slug);
+    // eslint-disable-next-line no-console
+    console.log('🔍 [디버깅] 마크다운 길이:', markdown.length);
+    
+    // HTML 태그가 제대로 닫혀있는지 확인
+    const openTags = markdown.match(/<[^/!][^>]*>/g) || [];
+    const closeTags = markdown.match(/<\/[^>]+>/g) || [];
+    // eslint-disable-next-line no-console
+    console.log('🔍 [디버깅] 열린 태그 수:', openTags.length, '닫힌 태그 수:', closeTags.length);
+    
+    // 닫히지 않은 태그 찾기
+    const tagStack: string[] = [];
+    const tagRegex = /<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g;
+    let match;
+    const unclosedTags: Array<{ tag: string; position: number }> = [];
+    
+    while ((match = tagRegex.exec(markdown)) !== null) {
+      const tagName = match[1];
+      const isClosing = match[0].startsWith('</');
+      const position = match.index;
+      
+      if (isClosing) {
+        if (tagStack.length === 0 || tagStack[tagStack.length - 1] !== tagName) {
+          unclosedTags.push({ tag: tagName, position });
+        } else {
+          tagStack.pop();
+        }
+      } else {
+        // self-closing 태그 체크
+        if (!match[0].endsWith('/>')) {
+          tagStack.push(tagName);
+        }
+      }
+    }
+    
+    if (unclosedTags.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log('🔍 [디버깅] 닫히지 않은 태그:', unclosedTags);
+    }
+    if (tagStack.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log('🔍 [디버깅] 닫히지 않은 태그 스택:', tagStack);
+    }
+    
+    // 특수 문자 확인
+    const specialChars = markdown.match(/[^\x20-\x7E\n\r\t]/g);
+    if (specialChars && specialChars.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log('🔍 [디버깅] 특수 문자 발견:', specialChars.slice(0, 20));
+    }
+    
+    // 문제가 될 수 있는 HTML 패턴 확인
+    const problematicPatterns = [
+      /<[^>]*\s+[^=]*=\s*[^"'>\s]+[^>]*>/g, // 따옴표 없는 속성
+      /<[^>]*\s+[^=]*=\s*"[^"]*$/gm, // 닫히지 않은 따옴표
+      /<[^>]*\s+[^=]*=\s*'[^']*$/gm, // 닫히지 않은 작은따옴표
+    ];
+    
+    problematicPatterns.forEach((pattern, index) => {
+      const matches = markdown.match(pattern);
+      if (matches && matches.length > 0) {
+        // eslint-disable-next-line no-console
+        console.log(`🔍 [디버깅] 문제 패턴 ${index + 1} 발견:`, matches.slice(0, 5));
+      }
+    });
+    
+    // 마크다운 샘플 출력 (처음 2000자)
+    // eslint-disable-next-line no-console
+    console.log('🔍 [디버깅] 마크다운 샘플 (처음 2000자):', markdown.substring(0, 2000));
+    
+    // 마크다운 샘플 출력 (마지막 1000자)
+    // eslint-disable-next-line no-console
+    console.log('🔍 [디버깅] 마크다운 샘플 (마지막 1000자):', markdown.substring(Math.max(0, markdown.length - 1000)));
+    
+    // HTML 태그 상세 분석
+    const allTags = markdown.match(/<[^>]*>/g);
+    if (allTags) {
+      // eslint-disable-next-line no-console
+      console.log('🔍 [디버깅] 모든 HTML 태그:', allTags);
+      
+      // img 태그 확인
+      const imgTags = markdown.match(/<img[^>]*>/g);
+      if (imgTags) {
+        // eslint-disable-next-line no-console
+        console.log('🔍 [디버깅] img 태그:', imgTags);
+        imgTags.forEach((imgTag, index) => {
+          // eslint-disable-next-line no-console
+          console.log(`🔍 [디버깅] img 태그 ${index + 1}:`, imgTag);
+          // eslint-disable-next-line no-console
+          console.log(`🔍 [디버깅] img 태그 ${index + 1} 닫혔는지:`, imgTag.endsWith('/>') || imgTag.endsWith('>'));
+        });
+      }
+    }
+    
+    // 마지막 500자에서 HTML 태그 찾기
+    const last500 = markdown.substring(Math.max(0, markdown.length - 500));
+    const tagsInLast500 = last500.match(/<[^>]*>/g);
+    if (tagsInLast500) {
+      // eslint-disable-next-line no-console
+      console.log('🔍 [디버깅] 마지막 500자 내 태그:', tagsInLast500);
+    }
+  }
+
   // 테스트 1: 마크다운 소스에 <u> 태그가 실제로 있는지 확인
   if (process.env.NODE_ENV === 'development') {
     const underlineMatches = markdown.match(/<u>.*?<\/u>/g);
@@ -264,7 +371,11 @@ export default async function BlogPost({ params }: BlogPostProps) {
                     // 먼저 일반 element로 변환한 후 sanitize
                     rehypeMdxToElement,
                     // rehype-sanitize: HTML을 안전하게 필터링하여 XSS 공격 방지
+                    // sanitize 전에 중첩 제거를 시도하지만, sanitize 후에도 다시 확인
                     [rehypeSanitize, customSanitizeSchema],
+                    // 중첩된 <a> 태그 제거: hydration 에러 방지
+                    // sanitize 후에 실행하여 최종 결과에서 중첩 제거
+                    rehypeRemoveNestedAnchors,
                     rehypePrettycode,
                     rehypeSlug,
                   ],

@@ -9,6 +9,16 @@ export const notion = new Client({
 
 const n2m = new NotionToMarkdown({ notionClient: notion });
 
+// HTML 속성 값 이스케이프 함수
+function escapeHtmlAttribute(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 // Notion 블록 타입 정의
 interface NotionRichText {
   plain_text: string;
@@ -59,7 +69,7 @@ n2m.setCustomTransformer('image', async (block) => {
 
   if (!imageUrl) return '';
 
-  return `<img src="${imageUrl}" alt="${captionText}" />`;
+  return `<img src="${escapeHtmlAttribute(imageUrl)}" alt="${escapeHtmlAttribute(captionText)}" />`;
 });
 
 n2m.setCustomTransformer('video', async (block) => {
@@ -78,16 +88,7 @@ n2m.setCustomTransformer('video', async (block) => {
     if (fileIdMatch && fileIdMatch[1]) {
       const fileId = fileIdMatch[1];
       const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-      return `<div class="aspect-video w-full rounded-lg overflow-hidden">
-  <iframe 
-    src="${previewUrl}" 
-    frameborder="0" 
-    allow="autoplay; fullscreen; picture-in-picture" 
-    allowfullscreen
-    class="w-full h-full"
-  ></iframe>
-  ${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${captionText}</p>` : ''}
-</div>`;
+      return `<div class="aspect-video w-full rounded-lg overflow-hidden"><iframe src="${escapeHtmlAttribute(previewUrl)}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen class="w-full h-full"></iframe>${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${escapeHtmlAttribute(captionText)}</p>` : ''}</div>`;
     }
   }
 
@@ -116,16 +117,7 @@ n2m.setCustomTransformer('embed', async (block) => {
     if (fileIdMatch && fileIdMatch[1]) {
       const fileId = fileIdMatch[1];
       const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-      return `<div class="aspect-video w-full rounded-lg overflow-hidden">
-  <iframe 
-    src="${previewUrl}" 
-    frameborder="0" 
-    allow="autoplay; fullscreen; picture-in-picture" 
-    allowfullscreen
-    class="w-full h-full"
-  ></iframe>
-  ${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${captionText}</p>` : ''}
-</div>`;
+      return `<div class="aspect-video w-full rounded-lg overflow-hidden"><iframe src="${escapeHtmlAttribute(previewUrl)}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen class="w-full h-full"></iframe>${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${escapeHtmlAttribute(captionText)}</p>` : ''}</div>`;
     }
   }
 
@@ -139,16 +131,7 @@ n2m.setCustomTransformer('embed', async (block) => {
     }
 
     if (videoId) {
-      return `<div class="aspect-video w-full rounded-lg overflow-hidden">
-  <iframe 
-    src="https://www.youtube.com/embed/${videoId}" 
-    frameborder="0" 
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-    allowfullscreen
-    class="w-full h-full"
-  ></iframe>
-  ${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${captionText}</p>` : ''}
-</div>`;
+      return `<div class="aspect-video w-full rounded-lg overflow-hidden"><iframe src="https://www.youtube.com/embed/${escapeHtmlAttribute(videoId)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full"></iframe>${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${escapeHtmlAttribute(captionText)}</p>` : ''}</div>`;
     }
   }
 
@@ -156,16 +139,7 @@ n2m.setCustomTransformer('embed', async (block) => {
   if (url.includes('vimeo.com')) {
     const videoId = url.split('vimeo.com/')[1]?.split('?')[0] || '';
     if (videoId) {
-      return `<div class="aspect-video w-full rounded-lg overflow-hidden">
-  <iframe 
-    src="https://player.vimeo.com/video/${videoId}" 
-    frameborder="0" 
-    allow="autoplay; fullscreen; picture-in-picture" 
-    allowfullscreen
-    class="w-full h-full"
-  ></iframe>
-  ${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${captionText}</p>` : ''}
-</div>`;
+      return `<div class="aspect-video w-full rounded-lg overflow-hidden"><iframe src="https://player.vimeo.com/video/${escapeHtmlAttribute(videoId)}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen class="w-full h-full"></iframe>${captionText ? `<p class="mt-2 text-sm text-muted-foreground">${escapeHtmlAttribute(captionText)}</p>` : ''}</div>`;
     }
   }
 
@@ -174,15 +148,17 @@ n2m.setCustomTransformer('embed', async (block) => {
   const isImage = imageExtensions.some((ext) => url.toLowerCase().includes(ext));
 
   if (isImage) {
-    return `<img src="${url}" alt="${captionText}" class="w-full rounded-lg" />`;
+    return `<img src="${escapeHtmlAttribute(url)}" alt="${escapeHtmlAttribute(captionText)}" class="w-full rounded-lg" />`;
   }
 
   // 일반 링크 미리보기
+  // URL을 <a> 태그 밖으로 분리하여 자동 링크 변환 방지
+  const displayText = captionText || '링크 열기';
   return `<div class="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-  <a href="${url}" target="_blank" rel="noopener noreferrer" class="block">
-    <p class="font-medium text-sm">${url}</p>
-    ${captionText ? `<p class="mt-1 text-xs text-muted-foreground">${captionText}</p>` : ''}
+  <a href="${url}" target="_blank" rel="noopener noreferrer" class="block no-underline">
+    <p class="font-medium text-sm break-words">${displayText}</p>
   </a>
+  ${!captionText ? `<div class="mt-1 text-xs text-muted-foreground break-all">${url}</div>` : ''}
 </div>`;
 });
 
@@ -194,11 +170,18 @@ n2m.setCustomTransformer('bookmark', async (block) => {
   const caption = bookmark.caption || [];
   const captionText = caption.map((item) => item.plain_text).join('') || '';
 
+  // URL을 텍스트로 표시하되, 자동 링크 변환을 방지하기 위해
+  // URL을 공백으로 분리하거나 특수 문자를 사용
+  // 또는 더 확실하게 하기 위해 URL을 별도의 요소로 분리
+  const displayText = captionText || '링크 열기';
+  
+  // URL을 별도 div로 분리하여 <a> 태그 밖에 배치
+  // 이렇게 하면 remarkGfm이 URL을 자동으로 링크로 변환해도 중첩되지 않음
   return `<div class="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-  <a href="${url}" target="_blank" rel="noopener noreferrer" class="block">
-    <p class="font-medium text-sm break-words">${url}</p>
-    ${captionText ? `<p class="mt-1 text-xs text-muted-foreground">${captionText}</p>` : ''}
+  <a href="${escapeHtmlAttribute(url)}" target="_blank" rel="noopener noreferrer" class="block no-underline">
+    <p class="font-medium text-sm break-words">${escapeHtmlAttribute(displayText)}</p>
   </a>
+  ${!captionText ? `<div class="mt-1 text-xs text-muted-foreground break-all">${escapeHtmlAttribute(url)}</div>` : ''}
 </div>`;
 });
 
@@ -304,7 +287,55 @@ export const getPostBySlug = async (
   const { parent } = n2m.toMarkdownString(mdblocks);
 
   // 밑줄 태그는 그대로 유지 (MDX가 기본적으로 HTML을 지원)
-  const processedMarkdown = parent;
+  let processedMarkdown = parent;
+
+  // 잘못된 HTML 태그 제거 (예: <\n\n텍스트\n> 형태)
+  // < 로 시작하고 > 로 끝나지만, 태그 이름이 없는 경우를 찾아서 수정
+  processedMarkdown = processedMarkdown.replace(/<([^a-zA-Z/!<>]*?)>/g, (match, content) => {
+    // 태그 이름이 없고 내용만 있는 경우 (예: <\n텍스트\n>)
+    // < 와 > 를 제거하고 내용만 남김
+    return content.trim();
+  });
+
+  // 디버깅: firstweek 슬러그인 경우 상세 로그
+  const postSlug = getPostMetadata(response.results[0] as PageObjectResponse).slug;
+  if (process.env.NODE_ENV === 'development' && postSlug === 'firstweek') {
+    // eslint-disable-next-line no-console
+    console.log('🔍 [Notion] 슬러그:', postSlug);
+    // eslint-disable-next-line no-console
+    console.log('🔍 [Notion] 원본 마크다운 길이:', processedMarkdown.length);
+    
+    // HTML 태그 확인
+    const htmlTags = processedMarkdown.match(/<[^>]+>/g);
+    if (htmlTags) {
+      // eslint-disable-next-line no-console
+      console.log('🔍 [Notion] HTML 태그 수:', htmlTags.length);
+      // eslint-disable-next-line no-console
+      console.log('🔍 [Notion] HTML 태그 샘플:', htmlTags.slice(0, 10));
+    }
+    
+    // iframe 태그 확인
+    const iframeTags = processedMarkdown.match(/<iframe[^>]*>/g);
+    if (iframeTags) {
+      // eslint-disable-next-line no-console
+      console.log('🔍 [Notion] iframe 태그 수:', iframeTags.length);
+      // eslint-disable-next-line no-console
+      console.log('🔍 [Notion] iframe 태그:', iframeTags);
+    }
+    
+    // 닫히지 않은 태그 확인 (전체 문자열에서 확인)
+    const iframeMatches = processedMarkdown.match(/<iframe[^>]*>/g);
+    if (iframeMatches) {
+      for (const iframeTag of iframeMatches) {
+        const iframeIndex = processedMarkdown.indexOf(iframeTag);
+        const afterIframe = processedMarkdown.substring(iframeIndex + iframeTag.length);
+        if (!afterIframe.includes('</iframe>')) {
+          // eslint-disable-next-line no-console
+          console.log('🔍 [Notion] 닫히지 않은 iframe 발견:', iframeTag);
+        }
+      }
+    }
+  }
 
   // 디버깅: 밑줄 패턴 확인 (개발 환경에서만)
   if (process.env.NODE_ENV === 'development') {
