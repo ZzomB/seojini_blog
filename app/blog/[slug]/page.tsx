@@ -74,6 +74,14 @@ export async function generateMetadata({
     };
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const canonicalUrl = `${siteUrl}/blog/${slug}`;
+  const ogImageUrl = post.coverImage
+    ? post.coverImage.startsWith('http')
+      ? post.coverImage
+      : `${siteUrl}${post.coverImage}`
+    : `${siteUrl}/opengraph-image`;
+
   return {
     title: post.title,
     description: post.description || `${post.title} - 서지니 블로그`,
@@ -81,27 +89,33 @@ export async function generateMetadata({
     authors: [{ name: post.author || 'Joo' }],
     publisher: 'Joo',
     alternates: {
-      canonical: `/blog/${slug}`,
+      canonical: canonicalUrl,
     },
     openGraph: {
       title: post.title,
-      description: post.description,
-      url: `/blog/${post.slug}`,
+      description: post.description || `${post.title} - 서지니 블로그`,
+      url: canonicalUrl,
       type: 'article',
+      locale: 'ko_KR',
       publishedTime: post.date,
-      modifiedTime: post.date,
-      authors: post.author || 'joo',
+      modifiedTime: post.modifiedDate || post.date,
+      authors: post.author || 'Joo',
       tags: post.tags,
-      ...(post.coverImage && {
-        images: [
-          {
-            url: post.coverImage,
-            width: 1200,
-            height: 600,
-            alt: post.title,
-          },
-        ],
-      }),
+      siteName: '서지니 블로그',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 600,
+          alt: post.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.description || `${post.title} - 서지니 블로그`,
+      images: [ogImageUrl],
     },
   };
 }

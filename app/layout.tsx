@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     template: '%s | 서지니 블로그',
     default: '서지니 블로그',
   },
-  description: 'for test real activating notion based blog',
-  keywords: ['Next.js', '프론트엔드', '웹개발', '코딩', '프로그래밍', '리액트'],
+  description: '일상을 기록한 특별한 블로그',
+  keywords: ['blog', '일상', '기록', '일기', '서지니', '호야', '경험'],
   authors: [{ name: 'Joo', url: 'https://github.com/ZzomB' }],
   creator: 'Joo',
   publisher: 'Joo',
@@ -30,19 +30,20 @@ export const metadata: Metadata = {
     telephone: false,
     address: false,
   },
-  metadataBase: new URL(`${process.env.NEXT_PUBLIC_SITE_URL}`),
+  metadataBase: new URL(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}`),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: '서지니 블로그',
-    description: '일상을 기록하는 특별한 블로그',
-    url: '/',
+    description: '일상을 기록한 특별한 블로그',
+    url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}`,
     siteName: '서지니 블로그',
     type: 'website',
+    locale: 'ko_KR',
     images: [
       {
-        url: '/opengraph-image',
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/opengraph-image`,
         width: 1200,
         height: 630,
         alt: '서지니 블로그',
@@ -52,8 +53,12 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: '서지니 블로그',
-    description: '일상을 기록하는 특별한 블로그',
-    images: ['/opengraph-image'],
+    description: '일상을 기록한 특별한 블로그',
+    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/opengraph-image`],
+  },
+  // 네이버 검색엔진 등록을 위한 메타 태그
+  other: {
+    'naver-site-verification': process.env.NAVER_SITE_VERIFICATION || '',
   },
 };
 
@@ -63,7 +68,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+    <html lang="ko" className="scroll-smooth" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
           <div className="flex min-h-screen flex-col">

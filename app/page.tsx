@@ -7,6 +7,20 @@ import TagSectionClient from '@/app/_components/TagSection.client';
 import PostListSkeleton from '@/components/features/blog/PostListSkeleton';
 import TagSectionSkeleton from '@/app/_components/TagSectionSkeleton';
 import { getPublishedPosts } from '@/lib/notion';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '서지니 블로그',
+  description: '일상을 기록한 특별한 블로그',
+  keywords: ['blog', '일상', '기록', '일기', '서지니', '호야', '경험'],
+  openGraph: {
+    title: '서지니 블로그',
+    description: '일상을 기록한 특별한 블로그',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+    type: 'website',
+    locale: 'ko_KR',
+  },
+};
 
 interface HomeProps {
   searchParams: Promise<{ tag?: string; sort?: string }>;
