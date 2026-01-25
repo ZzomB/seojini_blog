@@ -32,7 +32,7 @@ export default function OgImage() {
             fontWeight: 'bold',
           }}
         >
-          Joos 블로그
+          서지니 블로그
         </div>
         <div
           style={{
@@ -42,7 +42,7 @@ export default function OgImage() {
             color: '#cccccc',
           }}
         >
-          This is a Test
+          일상을 기록하는 특별한 블로그
         </div>
       </div>
     ),

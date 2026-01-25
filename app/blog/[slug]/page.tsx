@@ -76,7 +76,7 @@ export async function generateMetadata({
 
   return {
     title: post.title,
-    description: post.description || `${post.title} - Joos Blog`,
+    description: post.description || `${post.title} - 서지니 블로그`,
     keywords: post.tags,
     authors: [{ name: post.author || 'Joo' }],
     publisher: 'Joo',
