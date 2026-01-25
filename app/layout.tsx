@@ -22,9 +22,9 @@ export const metadata: Metadata = {
   },
   description: '일상을 기록한 특별한 블로그',
   keywords: ['blog', '일상', '기록', '일기', '서지니', '호야', '경험'],
-  authors: [{ name: 'Joo', url: 'https://github.com/ZzomB' }],
-  creator: 'Joo',
-  publisher: 'Joo',
+  authors: [{ name: 'Jini', url: 'https://github.com/ZzomB' }],
+  creator: 'Jini',
+  publisher: 'Jini',
   formatDetection: {
     email: false,
     telephone: false,
@@ -56,9 +56,10 @@ export const metadata: Metadata = {
     description: '일상을 기록한 특별한 블로그',
     images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/opengraph-image`],
   },
-  // 네이버 검색엔진 등록을 위한 메타 태그
+  // 검색엔진 등록을 위한 메타 태그
   other: {
-    'naver-site-verification': process.env.NAVER_SITE_VERIFICATION || '',
+    'google-site-verification': 'rAAfHvLxiZs2MaUy-S93bbHCCBaGHvRbPM9P-HSJkXk',
+    'naver-site-verification': '', // 네이버 등록 시 인증 코드 입력
   },
 };
 

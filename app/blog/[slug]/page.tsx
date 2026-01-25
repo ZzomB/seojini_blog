@@ -86,8 +86,8 @@ export async function generateMetadata({
     title: post.title,
     description: post.description || `${post.title} - 서지니 블로그`,
     keywords: post.tags,
-    authors: [{ name: post.author || 'Joo' }],
-    publisher: 'Joo',
+    authors: [{ name: post.author || 'Jini' }],
+    publisher: 'Jini',
     alternates: {
       canonical: canonicalUrl,
     },
@@ -99,7 +99,7 @@ export async function generateMetadata({
       locale: 'ko_KR',
       publishedTime: post.date,
       modifiedTime: post.modifiedDate || post.date,
-      authors: post.author || 'Joo',
+      authors: post.author || 'Jini',
       tags: post.tags,
       siteName: '서지니 블로그',
       images: [
