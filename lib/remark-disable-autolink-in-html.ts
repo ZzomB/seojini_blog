@@ -13,7 +13,7 @@ import { visit } from 'unist-util-visit';
  */
 export const remarkDisableAutolinkInHtml: Plugin<[], Root> = () => {
   return (tree) => {
-    visit(tree, 'html', (node) => {
+    visit(tree, 'html', () => {
       // HTML 노드 내부의 URL을 특수 문자로 변환하여 자동 링크 변환 방지
       // 하지만 이 방법은 복잡하므로, 대신 rehype 플러그인에서 처리
     });

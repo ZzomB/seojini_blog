@@ -294,8 +294,47 @@ export default async function BlogPost({ params }: BlogPostProps) {
     ],
   });
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const canonicalUrl = `${siteUrl}/blog/${slug}`;
+  const ogImageUrl = post.coverImage
+    ? post.coverImage.startsWith('http')
+      ? post.coverImage
+      : `${siteUrl}${post.coverImage}`
+    : `${siteUrl}/opengraph-image`;
+
+  // 구조화된 데이터 (JSON-LD) - 구글 검색엔진 최적화
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.description || `${post.title} - 서지니 블로그`,
+    image: ogImageUrl,
+    datePublished: post.date,
+    dateModified: post.modifiedDate || post.date,
+    author: {
+      '@type': 'Person',
+      name: post.author || 'Jini',
+      url: 'https://github.com/ZzomB',
+    },
+    publisher: {
+      '@type': 'Person',
+      name: 'Jini',
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': canonicalUrl,
+    },
+    keywords: post.tags?.join(', ') || '',
+    inLanguage: 'ko-KR',
+  };
+
   return (
-    <div className="container py-6 md:py-12 lg:py-12">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <div className="container py-6 md:py-12 lg:py-12">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[240px_1fr_240px] md:gap-8">
         <aside className="hidden md:block">{/* 추후콘텐츠 추가 */}</aside>
         <section className="overflow-hidden">
@@ -420,5 +459,6 @@ export default async function BlogPost({ params }: BlogPostProps) {
         </aside>
       </div>
     </div>
+    </>
   );
 }
